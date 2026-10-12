@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Learning Pronunciation via Global News Toronto</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+(function(){
+  const s=localStorage.getItem('theme');
+  const d=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  document.documentElement.setAttribute('data-theme',s||(d?'dark':'light'));
+})();
+</script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mu:#5d6772;--bd:#d5dae0;--ac:#c8102e;--bt:#eef0f3;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171a;--card:#1e2226;--tx:#eceef1;--mu:#9aa5b1;--bd:#363c43;--bt:#2a3036;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14171a;--card:#1e2226;--tx:#eceef1;--mu:#9aa5b1;--bd:#363c43;--bt:#2a3036;color-scheme:dark}
+:root[data-theme="light"]{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mu:#5d6772;--bd:#d5dae0;--ac:#c8102e;--bt:#eef0f3;color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;padding:16px;transition:background .2s,color .2s}
+main{max-width:900px;margin:0 auto}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:.2em 0}
+h1{font-size:1.4rem;margin:0}
+.theme-btn{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;padding:6px 14px;border-radius:20px;cursor:pointer;white-space:nowrap;user-select:none;background:var(--bt);color:var(--tx);border:1px solid var(--bd);transition:background .2s,border-color .2s,transform .1s}
+.theme-btn:hover{filter:brightness(0.95)}
+.sub{color:var(--mu);margin:6px 0 16px}.sub a{color:var(--ac)}
+section{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px;transition:background .2s,border-color .2s}
+h2{font-size:1.05rem;margin:0 0 10px}
+button,select{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--bt);color:var(--tx);cursor:pointer;transition:background .2s,border-color .2s}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+audio{width:100%;margin-top:12px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.cols{grid-template-columns:1fr}}
+label{font-weight:600;display:block;margin-bottom:6px}
+textarea{width:100%;box-sizing:border-box;min-height:120px;resize:vertical;font:inherit;padding:10px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);transition:background .2s,border-color .2s,color .2s}
+.res{min-height:140px;padding:12px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);font-size:1.05rem;line-height:1.9;overflow:auto;transition:background .2s,border-color .2s}
+.bad{background:#d62839;color:#fff;padding:1px 4px;border-radius:4px;cursor:pointer}
+.good{background:#ffe14d;color:#222;padding:1px 4px;border-radius:4px;cursor:pointer}
+#status{color:var(--mu);font-size:.9rem;margin-top:8px}
+.rec{color:var(--ac);font-weight:700}
+</style></head><body><main>
+<header class="header">
+  <h1>🎙️ Learning Pronunciation via Reading Global News Toronto</h1>
+  <button id="theme-toggle" class="theme-btn" type="button" aria-label="Toggle dark or light mode" title="Toggle dark/light mode">🌙 Dark</button>
+</header>
+<p class="sub">Read a headline from <a href="https://globalnews.ca/toronto/" target="_blank" rel="noopener">globalnews.ca/toronto</a> aloud, then compare. Works best in Chrome / Edge / Safari.</p>
+
+<section><h2>Section 1: Record your voice</h2>
+<div class="row"><button id="dict" class="pri" title="Transcribe and record your voice">🗣 Dictate + record</button></div>
+<audio id="audio" controls hidden></audio>
+<div id="status">Press “Dictate + record”, read the headline aloud, then press “Stop dictating”.</div></section>
+
+<section><h2>Section 2: Compare recorded voice vs original news headline</h2>
+<div class="cols">
+<div><label for="mine">My-voice TextBox</label><textarea id="mine" placeholder="Your transcript appears here after Submit…"></textarea>
+<div class="row" style="margin-top:8px"><button data-say="mine">▶ Play</button><select id="v1"></select></div></div>
+<div><label for="orig">Original News Headline TextBox</label><textarea id="orig" placeholder="Paste the headline from Global News Toronto…"></textarea>
+<div class="row" style="margin-top:8px"><button data-say="orig">▶ Play</button><select id="v2"></select></div></div>
+</div>
+<div class="row" style="margin-top:14px"><button id="cmp" class="pri">Compare</button></div></section>
+
+<section><h2>Section 3: Compare Result</h2>
+<div id="res" class="res" style="resize:vertical">Results appear here. Hover over a highlighted word to hear it.</div>
+<p class="sub" style="margin:8px 0 0"><span class="bad">red</span> = what you said &nbsp; <span class="good">yellow</span> = original text</p></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+
+// Theme Toggle logic
+const themeBtn=$('theme-toggle');
+const updateThemeUI=t=>{
+  if(!themeBtn)return;
+  const isDark=t==='dark';
+  themeBtn.textContent=isDark?'☀️ Light':'🌙 Dark';
+  themeBtn.title=isDark?'Switch to light mode':'Switch to dark mode';
+  themeBtn.setAttribute('aria-label',isDark?'Switch to light mode':'Switch to dark mode');
+};
+updateThemeUI(document.documentElement.getAttribute('data-theme')||'light');
+if(themeBtn){
+  themeBtn.onclick=()=>{
+    const cur=document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';
+    const next=cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('theme',next);
+    updateThemeUI(next);
+  };
+}
+window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',e=>{
+  if(!localStorage.getItem('theme')){
+    const next=e.matches?'dark':'light';
+    document.documentElement.setAttribute('data-theme',next);
+    updateThemeUI(next);
+  }
+});
+
+const VOICES=[["en-GB","female","🇬🇧 British – Female"],["en-GB","male","🇬🇧 British – Male"],["en-US","female","🇺🇸 US – Female"],["en-US","male","🇺🇸 US – Male"]];
+for(const s of [$('v1'),$('v2')])VOICES.forEach((v,i)=>s.add(new Option(v[2],i)));
+$('v2').value=2;
+const FEM=/female|samantha|karen|serena|susan|zira|hazel|jenny|aria|libby|sonia|victoria|moira|tessa|fiona|kate|ava|allison/i;
+const MAL=/\bmale\b|daniel|alex|fred|david|george|ryan|mark|guy|arthur|oliver|thomas|james|rishi/i;
+function speak(text,idx){
+  if(!text.trim())return;speechSynthesis.cancel();
+  const [lang,g]=VOICES[idx];const u=new SpeechSynthesisUtterance(text);u.lang=lang;
+  const all=speechSynthesis.getVoices().filter(v=>v.lang.replace('_','-').toLowerCase()===lang.toLowerCase());
+  let v=all.find(v=>g==='female'?(FEM.test(v.name)&&!/\bmale\b/i.test(v.name)):MAL.test(v.name));
+  if(v)u.voice=v;else{if(all[0])u.voice=all[0];u.pitch=g==='female'?1.4:0.7;}
+  speechSynthesis.speak(u);
+}
+speechSynthesis.onvoiceschanged=()=>{};
+document.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>{
+  const k=b.dataset.say;speak($(k).value,$(k==='mine'?'v1':'v2').value);});
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let url;
+const st=t=>$('status').innerHTML=t;
+
+// Dictate-only fallback: speech recognition alone, so it has the mic to itself
+let dr,dmr,dstream;
+async function startSideRecorder(){
+  if(!dr)return true;
+  try{dstream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true}});
+    const ch=[];dmr=new MediaRecorder(dstream);
+    dmr.ondataavailable=e=>ch.push(e.data);
+    dmr.onstop=()=>{const blob=new Blob(ch,{type:dmr.mimeType||'audio/webm'});
+      if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(blob);
+      $('audio').src=url;$('audio').hidden=false;
+      dstream.getTracks().forEach(t=>t.stop());dmr=null;};
+    dmr.start();return true;
+  }catch(e){dmr=null;return false;}
+}
+$('dict').onclick=()=>{
+  if(!SR){st('This browser has no speech recognition. Use Chrome, Edge or Safari.');return;}
+  if(dr){dr.stop();return;}
+  const r=dr=new SR();r.lang='en-US';r.continuous=true;r.interimResults=true;let t='';
+  r.onresult=e=>{t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript+' ';$('mine').value=t.trim();};
+  r.onerror=e=>st('Dictation error: '+e.error);
+  r.onend=()=>{if(dmr&&dmr.state!=='inactive')dmr.stop();dr=null;$('dict').textContent='🗣 Dictate + record';if(t.trim())st('Dictation finished. The transcript is in Section 2.');};
+  try{r.start();setTimeout(()=>{startSideRecorder().then(ok=>{if(!ok)st('Dictating, but the audio track could not be recorded.');});},600);$('dict').textContent='■ Stop dictating';st('<span class="rec">● Listening…</span> Read the headline, then press Stop dictating.');}catch(e){dr=null;st('Could not start dictation.');}
+};
+
+// Compare
+const norm=w=>w.toLowerCase().replace(/[^\p{L}\p{N}']/gu,'');
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('cmp').onclick=()=>{
+  const a=$('mine').value.trim().split(/\s+/).filter(Boolean),b=$('orig').value.trim().split(/\s+/).filter(Boolean);
+  if(!a.length&&!b.length){$('res').textContent='Nothing to compare yet.';return;}
+  const A=a.map(norm),B=b.map(norm),n=a.length,m=b.length;
+  const L=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i][j]=A[i]===B[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  let i=0,j=0,out=[],da=[],db=[];
+  const flush=()=>{
+    if(da.length)out.push(`<span class="bad" data-t="${esc(da.join(' '))}">${esc(da.join(' '))}</span>`);
+    if(db.length)out.push(`<span class="good" data-t="${esc(db.join(' '))}">${esc(db.join(' '))}</span>`);
+    da=[];db=[];};
+  while(i<n||j<m){
+    if(i<n&&j<m&&A[i]===B[j]){flush();out.push(esc(b[j]));i++;j++;}
+    else if(j>=m||(i<n&&L[i+1][j]>=L[i][j+1])){da.push(a[i++]);}
+    else{db.push(b[j++]);}
+  }
+  flush();$('res').innerHTML=out.join(' ');
+};
+let hoverT;
+$('res').addEventListener('mouseover',e=>{const t=e.target.closest('[data-t]');if(!t)return;
+  clearTimeout(hoverT);hoverT=setTimeout(()=>speak(t.dataset.t,t.classList.contains('bad')?$('v1').value:$('v2').value),120);});
+$('res').addEventListener('mouseout',e=>{if(e.target.closest('[data-t]'))clearTimeout(hoverT);});
+$('res').addEventListener('click',e=>{const t=e.target.closest('[data-t]');if(t)speak(t.dataset.t,t.classList.contains('bad')?$('v1').value:$('v2').value);});
+</script></body></html>
